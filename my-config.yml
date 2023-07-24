@@ -1,0 +1,15 @@
+name: nakama-node-1
+data_dir: "./data/"
+
+logger:
+  #stdout: false
+  level: "DEBUG"
+  #file: "/nakama/data/logfile.log"
+
+runtime:
+  js_entrypoint: "build/index.js"
+
+console:
+  port: 7351
+  username: "argo"
+  password: "password"
