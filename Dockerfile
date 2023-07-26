@@ -1,5 +1,8 @@
 FROM node:alpine AS node-builder
 
+# Set a build argument with a random value
+ARG CACHEBUST=$(date +%s)	
+
 WORKDIR /backend
 
 COPY package*.json ./

@@ -1,6 +1,9 @@
 {
   "files": [
     "./src/main.ts",
+    "./src/match_handler.ts",
+    "./src/create_match.ts",
+    "./src/matchmaker.ts",
   ],
   "compilerOptions": {
     "target": "es5",
