@@ -16,6 +16,6 @@ function findOrCreateMatch(ctx: nkruntime.Context, logger: nkruntime.Logger, nk:
   }
 
   // If no matches exist, create a new one using the "lobby" module and return it's ID.
-  var matchId = nk.matchCreate(moduleName, { debug: true });
+  var matchId = nk.matchCreate(moduleName_classic, { debug: true });
   return JSON.stringify({ matchId });
 }

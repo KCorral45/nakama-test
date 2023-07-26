@@ -1,7 +1,8 @@
 {
   "files": [
     "./src/main.ts",
-    "./src/match_handler.ts",
+    "./src/classic_match_handler.ts",
+    "./src/ranked_match_handler.ts",
     "./src/create_match.ts",
     "./src/matchmaker.ts",
   ],
