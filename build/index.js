@@ -24,13 +24,20 @@ var InitModule = function (ctx, logger, nk, initializer) {
     logger.info("Hello World!");
 };
 var moduleName_classic = "classic";
+var classicTickRate = 5;
+var maxEmptySec = 30;
 var classicMatchInit = function (ctx, logger, nk, params) {
     logger.debug('Lobby match created');
+    var state = {
+        emptyTicks: 0,
+        presences: {},
+        joinsInProgress: 0,
+        playing: false,
+        nextGameRemainingTicks: 0,
+    };
     return {
-        state: {
-            Debug: true
-        },
-        tickRate: 10,
+        state: state,
+        tickRate: classicTickRate,
         label: "classic"
     };
 };
@@ -39,12 +46,20 @@ var classicMatchJoin = function (ctx, logger, nk, dispatcher, tick, state, prese
         state.presences[presence.userId] = presence;
         logger.debug('%q joined Lobby match', presence.userId);
     });
+    for (var _i = 0, presences_1 = presences; _i < presences_1.length; _i++) {
+        var presence = presences_1[_i];
+        state.emptyTicks = 0;
+        state.presences[presence.userId] = presence;
+        state.joinsInProgress--;
+    }
     return {
         state: state
     };
 };
 var classicMatchJoinAttempt = function (ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
     logger.debug('%q attempted to join Lobby match', ctx.userId);
+    // New player attempting to connect.
+    state.joinsInProgress++;
     return {
         state: state,
         accept: true
@@ -60,13 +75,15 @@ var classicMatchLeave = function (ctx, logger, nk, dispatcher, tick, state, pres
     };
 };
 var classicMatchLoop = function (ctx, logger, nk, dispatcher, tick, state, messages) {
+    logger.debug('Running match loop. Tick: %d', tick);
     // If we have no presences in the match according to the match state, increment the empty ticks count
-    if (state.presences.length === 0) {
+    if (connectedPlayers(state) + state.joinsInProgress === 0) {
         state.emptyTicks++;
-    }
-    // If the match has been empty for more than 100 ticks, end the match by returning null
-    if (state.emptyTicks > 100) {
-        return null;
+        if (state.emptyTicks >= maxEmptySec * classicTickRate) {
+            // Match has been empty for too long, close it.
+            logger.info('Closing Idle Match');
+            return null;
+        }
     }
     return {
         state: state
@@ -85,6 +102,16 @@ var classicMatchTerminate = function (ctx, logger, nk, dispatcher, tick, state, 
         state: state
     };
 };
+function connectedPlayers(s) {
+    var count = 0;
+    for (var _i = 0, _a = Object.keys(s.presences); _i < _a.length; _i++) {
+        var p = _a[_i];
+        if (s.presences[p] !== null) {
+            count++;
+        }
+    }
+    return count;
+}
 var moduleName_ranked = "ranked";
 var rankedMatchInit = function (ctx, logger, nk, params) {
     logger.debug('Lobby match created');
@@ -122,7 +149,13 @@ var rankedMatchLeave = function (ctx, logger, nk, dispatcher, tick, state, prese
     };
 };
 var rankedMatchLoop = function (ctx, logger, nk, dispatcher, tick, state, messages) {
-    logger.debug('Lobby match loop executed');
+    if (state.presences.length === 0) {
+        state.emptyTicks++;
+    }
+    // If the match has been empty for more than 100 ticks, end the match by returning null
+    if (state.emptyTicks > 100) {
+        return null;
+    }
     return {
         state: state
     };
