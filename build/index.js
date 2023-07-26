@@ -2,27 +2,39 @@
 var InitModule = function (ctx, logger, nk, initializer) {
     initializer.registerRpc("create_match", rpcCreateMatch);
     initializer.registerRpc("matchmaker", findOrCreateMatch);
-    initializer.registerMatch(moduleName, {
-        matchInit: matchInit,
-        matchJoinAttempt: matchJoinAttempt,
-        matchJoin: matchJoin,
-        matchLeave: matchLeave,
-        matchLoop: matchLoop,
-        matchTerminate: matchTerminate,
-        matchSignal: matchSignal,
+    initializer.registerRpc("match_listings", getMatchListings);
+    initializer.registerMatch(moduleName_classic, {
+        matchInit: classicMatchInit,
+        matchJoinAttempt: classicMatchJoinAttempt,
+        matchJoin: classicMatchJoin,
+        matchLeave: classicMatchLeave,
+        matchLoop: classicMatchLoop,
+        matchTerminate: classicMatchTerminate,
+        matchSignal: classicMatchSignal,
+    });
+    initializer.registerMatch(moduleName_ranked, {
+        matchInit: rankedMatchInit,
+        matchJoinAttempt: rankedMatchJoinAttempt,
+        matchJoin: rankedMatchJoin,
+        matchLeave: rankedMatchLeave,
+        matchLoop: rankedMatchLoop,
+        matchTerminate: rankedMatchTerminate,
+        matchSignal: rankedMatchSignal,
     });
     logger.info("Hello World!");
 };
-var moduleName = "torneo";
-var matchInit = function (ctx, logger, nk, params) {
+var moduleName_classic = "classic";
+var classicMatchInit = function (ctx, logger, nk, params) {
     logger.debug('Lobby match created');
     return {
-        state: { Debug: true },
+        state: {
+            Debug: true
+        },
         tickRate: 10,
-        label: ""
+        label: "classic"
     };
 };
-var matchJoin = function (ctx, logger, nk, dispatcher, tick, state, presences) {
+var classicMatchJoin = function (ctx, logger, nk, dispatcher, tick, state, presences) {
     presences.forEach(function (presence) {
         state.presences[presence.userId] = presence;
         logger.debug('%q joined Lobby match', presence.userId);
@@ -31,14 +43,14 @@ var matchJoin = function (ctx, logger, nk, dispatcher, tick, state, presences) {
         state: state
     };
 };
-var matchJoinAttempt = function (ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
+var classicMatchJoinAttempt = function (ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
     logger.debug('%q attempted to join Lobby match', ctx.userId);
     return {
         state: state,
         accept: true
     };
 };
-var matchLeave = function (ctx, logger, nk, dispatcher, tick, state, presences) {
+var classicMatchLeave = function (ctx, logger, nk, dispatcher, tick, state, presences) {
     presences.forEach(function (presence) {
         state.presences[presence.userId] = presence;
         logger.debug('%q left Lobby match', presence.userId);
@@ -47,27 +59,89 @@ var matchLeave = function (ctx, logger, nk, dispatcher, tick, state, presences) 
         state: state
     };
 };
-var matchLoop = function (ctx, logger, nk, dispatcher, tick, state, messages) {
-    logger.debug('Lobby match loop executed');
+var classicMatchLoop = function (ctx, logger, nk, dispatcher, tick, state, messages) {
+    // If we have no presences in the match according to the match state, increment the empty ticks count
+    if (state.presences.length === 0) {
+        state.emptyTicks++;
+    }
+    // If the match has been empty for more than 100 ticks, end the match by returning null
+    if (state.emptyTicks > 100) {
+        return null;
+    }
     return {
         state: state
     };
 };
-var matchSignal = function (ctx, logger, nk, dispatcher, tick, state, data) {
+var classicMatchSignal = function (ctx, logger, nk, dispatcher, tick, state, data) {
     logger.debug('Lobby match signal received: ' + data);
     return {
         state: state,
         data: "Lobby match signal received: " + data
     };
 };
-var matchTerminate = function (ctx, logger, nk, dispatcher, tick, state, graceSeconds) {
+var classicMatchTerminate = function (ctx, logger, nk, dispatcher, tick, state, graceSeconds) {
+    logger.debug('Lobby match terminated');
+    return {
+        state: state
+    };
+};
+var moduleName_ranked = "ranked";
+var rankedMatchInit = function (ctx, logger, nk, params) {
+    logger.debug('Lobby match created');
+    return {
+        state: {
+            Debug: true
+        },
+        tickRate: 10,
+        label: "ranked"
+    };
+};
+var rankedMatchJoin = function (ctx, logger, nk, dispatcher, tick, state, presences) {
+    presences.forEach(function (presence) {
+        state.presences[presence.userId] = presence;
+        logger.debug('%q joined Lobby match', presence.userId);
+    });
+    return {
+        state: state
+    };
+};
+var rankedMatchJoinAttempt = function (ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
+    logger.debug('%q attempted to join Lobby match', ctx.userId);
+    return {
+        state: state,
+        accept: true
+    };
+};
+var rankedMatchLeave = function (ctx, logger, nk, dispatcher, tick, state, presences) {
+    presences.forEach(function (presence) {
+        state.presences[presence.userId] = presence;
+        logger.debug('%q left Lobby match', presence.userId);
+    });
+    return {
+        state: state
+    };
+};
+var rankedMatchLoop = function (ctx, logger, nk, dispatcher, tick, state, messages) {
+    logger.debug('Lobby match loop executed');
+    return {
+        state: state
+    };
+};
+var rankedMatchSignal = function (ctx, logger, nk, dispatcher, tick, state, data) {
+    logger.debug('Lobby match signal received: ' + data);
+    return {
+        state: state,
+        data: "Lobby match signal received: " + data
+    };
+};
+var rankedMatchTerminate = function (ctx, logger, nk, dispatcher, tick, state, graceSeconds) {
     logger.debug('Lobby match terminated');
     return {
         state: state
     };
 };
 function rpcCreateMatch(ctx, logger, nk, payload) {
-    var matchId = nk.matchCreate('torneo', { payload: payload });
+    var matchId = nk.matchCreate('classic');
     return JSON.stringify({ matchId: matchId });
 }
 function findOrCreateMatch(ctx, logger, nk, payload) {
@@ -76,7 +150,7 @@ function findOrCreateMatch(ctx, logger, nk, payload) {
     var isAuthoritative = true;
     var minSize = 2;
     var maxSize = 5;
-    var label = "";
+    var label = "*";
     var matches = nk.matchList(limit, isAuthoritative, label, minSize, maxSize, "");
     // If matches exist, sort by match size and return the largest.
     if (matches.length > 0) {
@@ -86,6 +160,17 @@ function findOrCreateMatch(ctx, logger, nk, payload) {
         return matches[0].matchId;
     }
     // If no matches exist, create a new one using the "lobby" module and return it's ID.
-    var matchId = nk.matchCreate(moduleName, { debug: true });
+    var matchId = nk.matchCreate(moduleName_classic, { debug: true });
     return JSON.stringify({ matchId: matchId });
+}
+function getMatchListings(context, logger, nk) {
+    var limit = 10;
+    var isAuthoritative = false;
+    var label = "";
+    var minSize = 0;
+    var maxSize = 4;
+    var matches = nk.matchList(limit, isAuthoritative, label, minSize, maxSize, "");
+    matches.forEach(function (match) {
+        logger.info("Match id '%s'", match.matchId);
+    });
 }

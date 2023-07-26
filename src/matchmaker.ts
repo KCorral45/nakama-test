@@ -4,7 +4,7 @@ function findOrCreateMatch(ctx: nkruntime.Context, logger: nkruntime.Logger, nk:
   const isAuthoritative = true;
   const minSize = 2;
   const maxSize = 5;
-  const label = "";
+  const label = "*";
   var matches = nk.matchList(limit, isAuthoritative, label, minSize, maxSize, "");
 
   // If matches exist, sort by match size and return the largest.

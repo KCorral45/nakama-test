@@ -4,9 +4,11 @@ const rankedMatchInit = function (ctx: nkruntime.Context, logger: nkruntime.Logg
 	logger.debug('Lobby match created');
   
 	return {
-	  state: { Debug: true },
+	  state: { 
+      Debug: true
+    },
 	  tickRate: 10,
-	  label: ""
+	  label: "ranked"
 	};
 };
 
@@ -42,8 +44,15 @@ const rankedMatchLeave = function (ctx: nkruntime.Context, logger: nkruntime.Log
 }
 
 const rankedMatchLoop = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, dispatcher: nkruntime.MatchDispatcher, tick: number, state: nkruntime.MatchState, messages: nkruntime.MatchMessage[]) : { state: nkruntime.MatchState} | null {
-	logger.debug('Lobby match loop executed');
-  
+	if (state.presences.length === 0) {
+    state.emptyTicks++;
+  }
+
+  // If the match has been empty for more than 100 ticks, end the match by returning null
+  if (state.emptyTicks > 100) {
+    return null;
+  }
+
 	return {
 	  state
 	};
