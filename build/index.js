@@ -58,6 +58,33 @@ var classicMatchJoin = function (ctx, logger, nk, dispatcher, tick, state, prese
 };
 var classicMatchJoinAttempt = function (ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
     logger.debug('%q attempted to join Lobby match', ctx.userId);
+    // Check if it's a user attempting to rejoin after a disconnect.
+    if (presence.userId in state.presences) {
+        if (state.presences[presence.userId] === null) {
+            // User rejoining after a disconnect.
+            state.joinsInProgress++;
+            return {
+                state: state,
+                accept: false,
+            };
+        }
+        else {
+            // User attempting to join from 2 different devices at the same time.
+            return {
+                state: state,
+                accept: false,
+                rejectMessage: 'already joined',
+            };
+        }
+    }
+    // Check if match is full.
+    if (connectedPlayers(state) + state.joinsInProgress >= 2) {
+        return {
+            state: state,
+            accept: false,
+            rejectMessage: 'match full',
+        };
+    }
     // New player attempting to connect.
     state.joinsInProgress++;
     return {
@@ -66,16 +93,17 @@ var classicMatchJoinAttempt = function (ctx, logger, nk, dispatcher, tick, state
     };
 };
 var classicMatchLeave = function (ctx, logger, nk, dispatcher, tick, state, presences) {
-    presences.forEach(function (presence) {
-        state.presences[presence.userId] = presence;
-        logger.debug('%q left Lobby match', presence.userId);
-    });
+    for (var _i = 0, presences_2 = presences; _i < presences_2.length; _i++) {
+        var presence = presences_2[_i];
+        logger.info("Player: %s left match: %s.", presence.userId, ctx.matchId);
+        state.presences[presence.userId] = null;
+    }
     return {
         state: state
     };
 };
 var classicMatchLoop = function (ctx, logger, nk, dispatcher, tick, state, messages) {
-    logger.debug('Running match loop. Tick: %d', tick);
+    logger.debug('Running match loop. Tick: %d; Empty Ticks: %d; Connected Players: %d', tick, state.emptyTicks, connectedPlayers(state));
     // If we have no presences in the match according to the match state, increment the empty ticks count
     if (connectedPlayers(state) + state.joinsInProgress === 0) {
         state.emptyTicks++;
@@ -199,11 +227,12 @@ function findOrCreateMatch(ctx, logger, nk, payload) {
 function getMatchListings(context, logger, nk) {
     var limit = 10;
     var isAuthoritative = false;
-    var label = "";
+    var label = "*";
     var minSize = 0;
     var maxSize = 4;
     var matches = nk.matchList(limit, isAuthoritative, label, minSize, maxSize, "");
     matches.forEach(function (match) {
         logger.info("Match id '%s'", match.matchId);
     });
+    return JSON.stringify({ matches: matches });
 }

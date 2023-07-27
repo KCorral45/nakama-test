@@ -1,7 +1,7 @@
 let InitModule: nkruntime.InitModule = function(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, initializer: nkruntime.Initializer) {
   initializer.registerRpc("create_match", rpcCreateMatch);
   initializer.registerRpc("matchmaker", findOrCreateMatch);
-  initializer.registerRpc("match_listings", getMatchListings);
+  initializer.registerRpc("get_matchlist", getMatchListings);
   initializer.registerMatch(moduleName_classic, {
     matchInit : classicMatchInit,
     matchJoinAttempt : classicMatchJoinAttempt,
