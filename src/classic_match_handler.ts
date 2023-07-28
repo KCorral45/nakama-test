@@ -45,7 +45,7 @@ let classicMatchJoin: nkruntime.MatchJoinFunction<State> = function (ctx: nkrunt
     state.presences[presence.userId] = presence;
     state.joinsInProgress--;
   }
-  
+
   return {
     state
   };
@@ -55,32 +55,32 @@ let classicMatchJoinAttempt: nkruntime.MatchJoinAttemptFunction<State> = functio
   logger.debug('%q attempted to join Lobby match', ctx.userId);
 
   // Check if it's a user attempting to rejoin after a disconnect.
-    if (presence.userId in state.presences) {
-      if (state.presences[presence.userId] === null) {
-        // User rejoining after a disconnect.
-        state.joinsInProgress++;
-        return {
-          state: state,
-          accept: false,
-        }
-      } else {
-        // User attempting to join from 2 different devices at the same time.
-        return {
-          state: state,
-          accept: false,
-          rejectMessage: 'already joined',
-        }
+  if (presence.userId in state.presences) {
+    if (state.presences[presence.userId] === null) {
+      // User rejoining after a disconnect.
+      state.joinsInProgress++;
+      return {
+        state: state,
+        accept: true, // allow user to rejoin
+      }
+    } else {
+      // User attempting to join from 2 different devices at the same time.
+      return {
+        state: state,
+        accept: false,
+        rejectMessage: 'already joined',
       }
     }
+  }
 
-    // Check if match is full.
-    if (connectedPlayers(state) + state.joinsInProgress >= 2) {
-      return {
-          state: state,
-          accept: false,
-          rejectMessage: 'match full',
-      };
-    }
+  // Check if match is full.
+  if (connectedPlayers(state) + state.joinsInProgress >= 2) {
+    return {
+      state: state,
+      accept: false,
+      rejectMessage: 'match full',
+    };
+  }
 
   // New player attempting to connect.
   state.joinsInProgress++;
@@ -95,7 +95,7 @@ let classicMatchLeave: nkruntime.MatchLeaveFunction<State> = function (ctx: nkru
     logger.info("Player: %s left match: %s.", presence.userId, ctx.matchId);
     state.presences[presence.userId] = null;
   }
-  
+
   return {
     state
   };
@@ -113,7 +113,7 @@ let classicMatchLoop: nkruntime.MatchLoopFunction<State> = function (ctx: nkrunt
       return null;
     }
   }
-  
+
   return {
     state
   };
@@ -121,7 +121,7 @@ let classicMatchLoop: nkruntime.MatchLoopFunction<State> = function (ctx: nkrunt
 
 let classicMatchSignal: nkruntime.MatchSignalFunction<State> = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, dispatcher: nkruntime.MatchDispatcher, tick: number, state: State, data: string) {
   logger.debug('Lobby match signal received: ' + data);
-  
+
   return {
     state,
     data: "Lobby match signal received: " + data
@@ -130,7 +130,7 @@ let classicMatchSignal: nkruntime.MatchSignalFunction<State> = function (ctx: nk
 
 let classicMatchTerminate: nkruntime.MatchTerminateFunction<State> = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, dispatcher: nkruntime.MatchDispatcher, tick: number, state: State, graceSeconds: number) {
   logger.debug('Lobby match terminated');
-  
+
   return {
     state
   };
@@ -140,7 +140,7 @@ function connectedPlayers(s: State): number {
   let count = 0;
   for(const p of Object.keys(s.presences)) {
     if (s.presences[p] !== null) {
-        count++;
+      count++;
     }
   }
   return count;

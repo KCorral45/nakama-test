@@ -1,7 +1,10 @@
 let InitModule: nkruntime.InitModule = function(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, initializer: nkruntime.Initializer) {
+  // register rpc
   initializer.registerRpc("create_match", rpcCreateMatch);
-  initializer.registerRpc("matchmaker", findOrCreateMatch);
+  initializer.registerRpc("find_or_create_match", findOrCreateMatch);
   initializer.registerRpc("get_matchlist", getMatchListings);
+
+  // register match
   initializer.registerMatch(moduleName_classic, {
     matchInit : classicMatchInit,
     matchJoinAttempt : classicMatchJoinAttempt,
@@ -11,6 +14,7 @@ let InitModule: nkruntime.InitModule = function(ctx: nkruntime.Context, logger: 
     matchTerminate : classicMatchTerminate,
     matchSignal : classicMatchSignal,
   });
+
   initializer.registerMatch(moduleName_ranked, {
     matchInit : rankedMatchInit,
     matchJoinAttempt : rankedMatchJoinAttempt,
@@ -20,5 +24,6 @@ let InitModule: nkruntime.InitModule = function(ctx: nkruntime.Context, logger: 
     matchTerminate : rankedMatchTerminate,
     matchSignal : rankedMatchSignal,
   });
-  logger.info("Hello World!");
+
+  logger.info("InitModule");
 }

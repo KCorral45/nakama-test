@@ -4,8 +4,8 @@
     "./src/classic_match_handler.ts",
     "./src/ranked_match_handler.ts",
     "./src/create_match.ts",
-    "./src/matchmaker.ts",
-    "./src/get_matchlist.ts",
+    "./src/find_or_create_match.ts",
+    "./src/get_matchlist.ts"
   ],
   "compilerOptions": {
     "target": "es5",
