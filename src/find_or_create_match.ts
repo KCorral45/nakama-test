@@ -12,7 +12,7 @@ function findOrCreateMatch(ctx: nkruntime.Context, logger: nkruntime.Logger, nk:
     matches.sort(function (a, b) {
       return a.size >= b.size ? 1 : -1;
     });
-    return matches[0].matchId;
+    return JSON.stringify({ matchId: matches[0].matchId });
   }
 
   // If no matches exist, create a new one using the "lobby" module and return it's ID.
