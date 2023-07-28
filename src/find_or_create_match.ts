@@ -2,7 +2,7 @@ function findOrCreateMatch(ctx: nkruntime.Context, logger: nkruntime.Logger, nk:
   logger.info('findOrCreateMatch rpc called');
   const limit = 10;
   const isAuthoritative = true;
-  const minSize = 2;
+  const minSize = 0;
   const maxSize = 5;
   const label = "*";
   var matches = nk.matchList(limit, isAuthoritative, label, minSize, maxSize, "");
